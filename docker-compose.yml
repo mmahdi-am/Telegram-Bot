@@ -6,17 +6,24 @@ services:
     restart: always
     env_file: ./.env
     environment:
-      - MYSQL_ROOT_PASSWORD=$MYSQL_PASSWORD
-      - MYSQL_DATABASE=$MYSQL_DATABASE
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
     ports:
-      - $MYSQL_LOCAL_PORT:$MYSQL_DOCKER_PORT
+      - "${MYSQL_LOCAL_PORT}:${MYSQL_DOCKER_PORT}"
     volumes:
-      - db:/var/lib/mysql
+      - telegrambot_db:/var/lib/mysql
     networks:
       - my_network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p${MYSQL_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   telegram_bot:
     depends_on:
-      - mysqldb
+      mysqldb:
+        condition: service_healthy
     build: .
     restart: always
     env_file: ./.env
@@ -25,11 +32,8 @@ services:
     networks:
       - my_network
 
-
-
 volumes:
-  db:
+  telegrambot_db:
 
 networks:
   my_network:
-
